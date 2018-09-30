@@ -4,24 +4,29 @@ import requests
 import time
 
 
-#load 
+#Initial load of DTG_Bot information. The JSON file contains a lot of information including the posts that we want.
 XurBotURLCurl="https://www.reddit.com/user/DTG_Bot/.json"
 response = requests.get(XurBotURLCurl)
 
-#title formatting
+#Time formatting for the thread title
 today = str(datetime.date.today())
 #today="2018-09-28"
 string_post="[D2] Xûr Megathread ["+today+"]"
 
+#There are a few delay commands here. These are for the Reddit anti-bot scripts which block requests that are too timed together. 
 time.sleep(3)
 parse=response.json()
+# This delay tries to help parsing the data
 time.sleep(3)
+# If the amount of text is small - we know that our request got denied by the anti-bot scripts. The next step evaluates the size of the returned text
 test_reddit= len(json.dumps(parse))
 
+#1000 characters is arbitrary but the normal response is about 36000. So this works pretty well
 if test_reddit <1000:
    reprocess=1
    print("Bad DTG_Bot Load")
    time.sleep(5)
+   #So we are just going to repeat the previous process 40 times until we get a good response. It's ugly but it works and we shouldn't need oauth to only read a public page. 
    for x in range(0,40):
       if reprocess==1:
          response = requests.get(XurBotURLCurl)
@@ -36,19 +41,23 @@ if test_reddit <1000:
             print("Reddit attempt " +str(x) +" did not work")
             time.sleep(7)
 
+#At this point we should have a good response
+#Now we will look at the last 20 posts from DTG_Bot to figure out which one is the megathread
+#The second line is to prevent an error in reading a json dictionary element that won't exist in a comment. "kind" "t3" = post, "kind" "t1" = comment in the thread. 
 for y in range(0,20):
    if parse["data"]["children"][y]["kind"]=="t3":
       test=parse["data"]["children"][y]["data"]["title"]
+      #If this post is the megathread we want - grab the text. Otherwise move to the next post. 
       if test==string_post:
          xurtext=parse["data"]["children"][y]["data"]["selftext"]
 
+#These lines remove some text about Xur at the bottom of the DTG_Bot post. 
 length=len(xurtext)
 length2=length-700
 xurtext2=xurtext[1:length2]
 
-
+#send the text to Slack
 headers = {'Content-type': 'application/json'}
-
 payload = '{"text":" <!channel> Here is what Xur has in stock: \n \n' + xurtext2 + ' " }'
 
 # webhook for Destiny_remastered
