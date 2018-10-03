@@ -2,6 +2,7 @@
 import json
 import requests
 import time
+import datetime
 
 
 
@@ -52,11 +53,20 @@ for y in range(0,20):
       if test==string_post:
          resettext=parse["data"]["children"][y]["data"]["selftext"]
 
-
+#Now that we have all the text we need to do two things
+# (1) Break apart the text (around 6500 characters) into two parts because slack limits a message to 4000 characters
+# (2) Sanitize the reset post because it contains a Shaxx quote. <--- took me 2 hours to figure that out
+length=len(resettext)
+resettext2=resettext[1:3000]
+resettextpartone=resettext2.replace('"','')
+resettextparttwo=resettext[3001,length]
 
 #send the text to Slack
 headers = {'Content-type': 'application/json'}
-payload = '{"text":" <!channel> Here are the changes for this weekly reset: \n \n' + resettext + ' " }'
+payload = '{"text":" <!channel> Here are the changes for this weekly reset: \n \n' + resettextpartone + ' " }'
+payload2 ='{"text":" ' + resettextparttwo + ' " }'
+
 r = requests.post('YOUR WEBHOOK HERE', data=payload.encode('utf8'), headers=headers)
+r2 = requests.post('YOUR WEBHOOK HERE', data=payload2.encode('utf8'), headers=headers)
 
 
