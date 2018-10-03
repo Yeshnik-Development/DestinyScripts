@@ -2,6 +2,7 @@
 import json
 import requests
 import time
+import datetime
 
 
 #Initial load of DTG_Bot information. The JSON file contains a lot of information including the posts that we want.
